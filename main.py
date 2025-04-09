@@ -11,11 +11,15 @@ from utils.constant import (
     YIN_DIAN_YAN_SE,
 )
 from utils.index import transform_dialect_infos_to_tree
+from utils.render import render_geojson
 
 ## 获取当前脚本所在目录
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def get_dialect_rows():
+    """
+    获取方言行
+    """
     rows = db.read(f"SELECT * FROM info")
     # 过滤掉没有音典颜色和经纬度坐标的点
     rows = [item for item in rows if (item[YIN_DIAN_YAN_SE] and item[JING_WEI_DU])]
@@ -36,6 +40,9 @@ def judge_point_in_area(
     longitude: float,
     geometry: gpd.GeoDataFrame.geometry,
 ) -> bool:
+    """
+    判断点是否在指定区域内
+    """
     # 创建点对象（注意坐标顺序：经度在前，纬度在后）
     point = Point(longitude, latitude)
 
@@ -49,6 +56,9 @@ def combin_regions(
     regions_to_remove: Iterable[str],
     new_region_name: str,
 ):
+    """
+    合并区域
+    """
     # 检查必要的字段是否存在
     if "name" not in gdf.columns:
         raise KeyError(
@@ -88,65 +98,69 @@ def combin_regions(
     return final_gdf
 
 
-def modify_geojson():
-    # 输入和输出文件路径配置
-    INPUT_FILE_PATH = os.path.join(
-        SCRIPT_DIR, "input/shen_zhen.json"
-    )  # 原始地理数据文件路径
-    OUTPUT_FILE_PATH = os.path.join(
-        SCRIPT_DIR, "output/china.json"
-    )  # 合并后输出文件路径
-    china_gdf = None
+def modify_geojson(
+    input_file_path: str, # 原始地理数据文件路径
+    output_file_path: str, # 合并后输出文件路径
+):
+    """
+    修改 GeoJSON 文件
+    """ 
+    gdf = None
     # 数据加载
     try:
         # 尝试从GeoJSON文件中加载中国的地理数据
-        china_gdf = gpd.read_file(INPUT_FILE_PATH)
+        gdf = gpd.read_file(input_file_path)
     except Exception as e:
         raise FileNotFoundError(
-            f"无法读取输入文件 '{INPUT_FILE_PATH}'。请检查文件路径是否正确。\n错误详情: {e}"
-        )
-    # final_gdf = combin_regions(china_gdf, ['湖北', '湖南'], ['南海诸岛', '十段线'], '湖广行省')
-
-    ## 读取数据库
-    # rows = db.read(f"SELECT * FROM info WHERE {JIAN_CHENG}=\"洛陽\" LIMIT 1")
+            f"无法读取输入文件 '{input_file_path}'。请检查文件路径是否正确。\n错误详情: {e}"
+        ) 
     
-    dialect_rows = get_dialect_rows()
-    print("🍓", len(dialect_rows))
-    # area = gdf[gdf['name'] == area_name]
+    dialect_rows = get_dialect_rows() 
 
-    # for gdf_item in final_gdf:
-    #     print(gdf_item['name'])
+    # # 遍历 GeoDataFrame 中的每个区块
+    # for index, gdf_item in gdf.iterrows():
+    #     for dialect_item in dialect_rows:
+    #         longitude = dialect_item[JING_WEI_DU].split(",")[0]
+    #         latitude = dialect_item[JING_WEI_DU].split(",")[1]
 
-    # 遍历 GeoDataFrame 中的每个区块
-    for index, gdf_item in china_gdf.iterrows():
-        for dialect_item in dialect_rows:
-            longitude = dialect_item[JING_WEI_DU].split(",")[0]
-            latitude = dialect_item[JING_WEI_DU].split(",")[1]
+    #         # 判断点是否在指定区块境内
+    #         point_in_area = judge_point_in_area(
+    #             latitude, longitude, geometry=gdf_item["geometry"]
+    #         )
+    #         if point_in_area:
+    #             print(f"{dialect_item[JIAN_CHENG]} 🔹 {gdf_item['name']} ✅")
 
-            # 判断点是否在指定区块境内
-            point_in_area = judge_point_in_area(
-                latitude, longitude, geometry=gdf_item["geometry"]
-            )
-            if point_in_area:
-                print(f"{dialect_item[JIAN_CHENG]} 🔹 {gdf_item['name']} ✅")
+    # 将方言信息转换为树结构（三级树）
+    dialect_info_tree = transform_dialect_infos_to_tree(dialect_rows)
+
+    print(dialect_info_tree)
+
+    
 
     # 输出结果
     try:
         # 导出处理后的地理数据到新的GeoJSON文件
-        china_gdf.to_file(OUTPUT_FILE_PATH, driver="GeoJSON")
+        gdf.to_file(output_file_path, driver="GeoJSON")
     except Exception as e:
         raise IOError(f"保存输出文件失败，请检查权限或磁盘空间。\n错误详情: {e}")
 
     # 打印操作完成提示
-    print(f"\n输出文件已保存至：{OUTPUT_FILE_PATH}")
+    print(f"\n输出文件已保存至：{output_file_path}")
 
 
 def main():
-    # modify_geojson() 
-    dialect_rows = get_dialect_rows()
-    # dialect_info_tree = transform_dialect_infos_to_tree(dialect_rows)
-    # print(dialect_info_tree)
-
+    """
+    主函数
+    """
+    modify_geojson(
+        os.path.join(
+            SCRIPT_DIR, "input/shen_zhen.json"
+        ),
+        os.path.join(
+            SCRIPT_DIR, "output/shen_zhen_dialect.json"
+        )
+    ) 
+    # render_geojson(os.path.join(SCRIPT_DIR, "input/方言.geojson"))
 
 # 确保 main 只在脚本直接运行时执行
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
 from utils.constant import YIN_DIAN_FEN_QV, JIAN_CHENG
 
 def transform_dialect_infos_to_tree(dialect_infos):
+    """
+    将 dialect_infos 转换为树结构
+    """
     tree = {}
 
     # Helper function to add dialect nodes recursively

@@ -12,7 +12,9 @@ class bcolors:
     FLUORESCENT_GREEN = '\033[38;5;46m'  # 荧光绿色
 
 def run_command_with_progress(command, cwd=None):
-    """Run shell command with progress output."""
+    """
+    运行命令并显示进度
+    """
     start_time = time.time()
     result = subprocess.run(command, shell=True, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     end_time = time.time()
@@ -27,7 +29,9 @@ def run_command_with_progress(command, cwd=None):
     return elapsed_time
 
 def check_pip_command():
-    """Check if pip3 command exists, otherwise use pip."""
+    """
+    检查 pip 命令
+    """
     try:
         subprocess.run(["pip3", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return "pip3"
@@ -36,6 +40,9 @@ def check_pip_command():
 
 
 def make_db():
+    """
+    生成数据库
+    """
     # 获取当前脚本的绝对路径
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
