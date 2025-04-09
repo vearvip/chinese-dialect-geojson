@@ -144,8 +144,8 @@ def modify_geojson():
 def main():
     # modify_geojson() 
     dialect_rows = get_dialect_rows()
-    dialect_info_tree = transform_dialect_infos_to_tree(dialect_rows)
-    print(dialect_info_tree)
+    # dialect_info_tree = transform_dialect_infos_to_tree(dialect_rows)
+    # print(dialect_info_tree)
 
 
 # 确保 main 只在脚本直接运行时执行
